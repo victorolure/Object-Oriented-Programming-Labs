@@ -2,16 +2,19 @@
 
 
 
-VendingMachine VendingMachine = new VendingMachine(1234);
+VendingMachine VendingMachine = new VendingMachine("VM001");
+
+//VendingMachine v2 = new VendingMachine("102");
+
+Console.WriteLine("here "+ VendingMachine.SerialNumber);
 
 Product Juice = new Product("Juice", 2, "A102");
+Product KetchUp = new Product("Ketchup", 4, "A103");
 
 VendingMachine.StockItem(Juice, 5);
+VendingMachine.StockItem(KetchUp, 6);
 Console.WriteLine(VendingMachine.StockItem(Juice, 6));
-foreach (KeyValuePair<Product, int> item in VendingMachine.Inventory)
-{
-    Console.WriteLine(VendingMachine.Inventory[item.Key]);
-}
+
 VendingMachine.StockFLoat(20, 5);
 VendingMachine.StockFLoat(10, 5);
 VendingMachine.StockFLoat(5, 5);
@@ -23,48 +26,79 @@ List<int> money = new List<int> { 5, 5, 5 };
 string vend = VendingMachine.VendItem("A102", money);
 Console.WriteLine(vend);
 
+VendingMachine.ExposeChangeFloat();
+VendingMachine.ExposeInventory();
+
+
+
+
+
+
 
 
 
 class VendingMachine
 {
-    public int SerialNumber { get; set; } 
+    public static int SerialNumber { get; set; } = 0;
 
-    public Dictionary<int, int> ChangeFloat { get; set; }
+    public string BarCode {get;}
 
-    public Dictionary<Product, int> Inventory { get; set; }
+    //public string BarCode { get { return _barCode; } set { _barCode = value;  } }
 
+    private Dictionary<int, int> _changeFloat { get; set; }
+
+    public void ExposeChangeFloat()
+    {
+        Dictionary<int, int> change = new Dictionary<int, int>();
+        foreach(KeyValuePair<int, int>kvp in _changeFloat)
+        {
+            change.Add(kvp.Key, kvp.Value);
+        }
+        foreach(KeyValuePair<int, int> kvp in change)
+        {
+            Console.WriteLine(kvp.Key + " - " + kvp.Value);
+        }
+    }
     
 
-    public VendingMachine(int number)
+    public Dictionary<Product, int> _inventory { get; set; }
+
+    public void ExposeInventory()
     {
-        SerialNumber = number;
-        Inventory = new Dictionary<Product, int>();
-        ChangeFloat = new Dictionary<int, int>();
+        Dictionary<Product, int> inventory = new Dictionary<Product, int>();
+        foreach(KeyValuePair<Product, int>kvp in _inventory)
+        {
+            inventory.Add(kvp.Key, kvp.Value);
+        }
+        foreach (KeyValuePair<Product, int> kvp in inventory)
+        {
+            Console.WriteLine($"Product Name:{kvp.Key.Name}, Quantity: {kvp.Value}");
+        }
+
     }
 
     public string StockItem (Product product, int quantity)
     {
-        if (Inventory.ContainsKey(product))
+        if (_inventory.ContainsKey(product))
         {
-            Inventory[product]+=quantity;
+            _inventory[product]+=quantity;
         }
         else
         {
-            Inventory.Add(product, quantity);
+            _inventory.Add(product, quantity);
         }
-        return $"Product: {product.Name}\nCode: {product.Code} \nUpdated Quantity: {Inventory[product]} ";
+        return $"Product: {product.Name}\nCode: {product.Code} \nUpdated Quantity: {_inventory[product]} ";
     }
 
     public void StockFLoat(int moneyDenomination, int quantity)
     {
-        if (ChangeFloat.ContainsKey(moneyDenomination))
+        if (_changeFloat.ContainsKey(moneyDenomination))
         {
-            ChangeFloat[moneyDenomination]+= quantity;
+            _changeFloat[moneyDenomination]+= quantity;
         }
         else
         {
-            ChangeFloat.Add(moneyDenomination, quantity);
+            _changeFloat.Add(moneyDenomination, quantity);
         }
    
     }
@@ -72,7 +106,7 @@ class VendingMachine
     public Product GetProduct (string code)
     {
         Product product;
-        foreach(KeyValuePair<Product, int> item in Inventory)
+        foreach(KeyValuePair<Product, int> item in _inventory)
         {
             if(item.Key.Code== code)
             {
@@ -86,7 +120,7 @@ class VendingMachine
     public string VendItem(string code, List<int> money)
     {
         int moneyTotal = money.Sum();
-        List<int> changeList = GetChangeList(ChangeFloat);
+        List<int> changeList = GetChangeList(_changeFloat);
         string message= "";
         Product product = GetProduct(code);
         
@@ -94,21 +128,21 @@ class VendingMachine
         if(product!= null)
         {
             int change = moneyTotal - product.Price;
-            if (GetTotalChange(ChangeFloat) >= change)
+            if (GetTotalChange(_changeFloat) >= change)
             {
-                if (Inventory[product] >= 1)
+                if (_inventory[product] >= 1)
                 {
                     if (moneyTotal >= product.Price)
                     {
-                        Inventory[product] -= 1;    
+                        _inventory[product] -= 1;    
                         foreach(int i in changeList)
                         {
                             if(change >= i)
                             {
                                 coinsToExtract = change / i;
-                                if (ChangeFloat[i] >= coinsToExtract)
+                                if (_changeFloat[i] >= coinsToExtract)
                                 {
-                                    ChangeFloat[i]-= coinsToExtract;
+                                    _changeFloat[i]-= coinsToExtract;
                                 }
                                 
 
@@ -163,9 +197,15 @@ class VendingMachine
         }
         return changeList;
     }
-    
 
-
+    public VendingMachine(string barCode)
+    {
+        SerialNumber++;
+        _inventory = new Dictionary<Product, int>();
+        _changeFloat = new Dictionary<int, int>();
+        BarCode= barCode;   
+        
+    }
 }
 
 
