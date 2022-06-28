@@ -42,7 +42,7 @@ static class Hotel
             Clients.Remove(client);
         }
     }
-    public static void VacateReservations(Client customer, int id)
+    public static void VacateReservations(Client customer)
     {
         foreach(Client client in Clients)
         {
